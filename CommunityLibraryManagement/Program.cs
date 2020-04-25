@@ -1,5 +1,6 @@
 ﻿using System;
 using System.ComponentModel.Design;
+using System.Diagnostics;
 using System.Net;
 using System.Reflection.Metadata;
 using System.Runtime.InteropServices;
@@ -9,9 +10,9 @@ namespace CommunityLibrary
 {
     class Program
     {
-        static int mainMenuSelection;
-        static int staffMenuSelection;
-        static int memberMenuSelection;
+        static string mainMenuSelection;
+        static string staffMenuSelection;
+        static string memberMenuSelection;
 
         static void DisplayMainMenu()
         {
@@ -30,30 +31,24 @@ namespace CommunityLibrary
 
         static void DisplayStaffLogin()
         {
-            string username = null;
+            string username;
             string password;
 
-            do
-            {
+            do {
                 // Reset the console
                 Console.Clear();
 
-                if (!string.IsNullOrEmpty(username)) // this means that it is not the first time this has happened --- not necessarily...
-                {
-                    Console.WriteLine("Incorrect username or password. Press any key to try again or press 0 to return to the main menu.");
-                    Console.ReadKey();
-                    Console.Clear();
-                }
+                // should add an error message ?
 
-                Console.WriteLine("Please enter your staff username: ");
+                Console.Write("Please enter your staff username: ");
                 username = Console.ReadLine().ToString();
 
-                Console.WriteLine("Please enter your staff password");
+                Console.Write("Please enter your staff password: ");
                 password = Console.ReadLine().ToString(); // do we need to censor password?
 
             } while (username != "staff" || password != "today123");
 
-            DisplayStaffMenu();
+            FunctionalStaffMenu();
         }
 
         static void DisplayStaffMenu()
@@ -74,6 +69,31 @@ namespace CommunityLibrary
 
         static void AddMovie()
         {
+            // Clear the console
+            Console.Clear();
+
+            // Entering movie details
+            // need to check validity of each input individually
+            Console.WriteLine("1. Add a new movie");
+            Console.WriteLine("");
+
+            Console.Write("Movie title: ");
+            string ttl = Console.ReadLine().ToString();
+
+            Console.Write("Starring actors (separated by commas): ");
+            string star = Console.ReadLine().ToString(); // still need to separate this out
+
+            Console.Write("Director: ");
+
+            Console.Write("Duration: ");
+
+            Console.Write("Genre (Drama, Adventure, Family, Action, SciFi, Comedy, Animated, Thriller or Other)"); // not case sensitive
+
+            Console.Write("Classification (General (G), ParentalGuidance (PG), Mature (M) or MatureAccompanied (MA)): "); // not case sensitive // maybe remove spaces too?
+
+            Console.Write("Release Date (dd-mm-yyyy): ");
+
+            Console.Write("Available copies: ");
 
         }
 
@@ -84,27 +104,38 @@ namespace CommunityLibrary
 
         static void RegisterMember()
         {
+            // Clear the console
+            Console.Clear();
+
+            // Entering member details
             Console.WriteLine("3. Register a new member");
             Console.WriteLine("");
             
-            Console.Write("Full name: ");
-            string name = Console.ReadLine().ToString();
+            Console.Write("First name: ");
+            string fname = Console.ReadLine().ToString();
+
+            Console.Write("Last name: ");
+            string lname = Console.ReadLine().ToString();
             
             Console.Write("Address: ");
             string addr = Console.ReadLine().ToString();
             
             Console.Write("Phone number: ");
-            string num = Console.ReadLine().ToString(); 
+            string num = Console.ReadLine().ToString();
 
+
+            // Message shown on successful/unsuccessful registration
             // LibraryManagement.Member new = new Member;
 
             // add an instance to member collection using (name, addr, num)
+
+            Console.WriteLine("");
+            Console.WriteLine("New member successfully created!"); // check that it was actually created.
+            // Press 1 to add another new member, 2 to return to staff menu, 3 to return to main menu, 4 to exit
         }
 
         static string FindPhoneNumber(string name)
         {
-            string number = 
-
             return "answer"; 
         }
 
@@ -135,24 +166,22 @@ namespace CommunityLibrary
             do
             {
                 DisplayMainMenu();
-                mainMenuSelection = Convert.ToInt32(Console.ReadKey().KeyChar);
-                Console.WriteLine(mainMenuSelection.ToString());
-                Console.ReadKey();
+                mainMenuSelection = Console.ReadLine().ToString();
 
                 switch (mainMenuSelection)
                 {
-                    case 149:
-                        FunctionalStaffMenu(); // display staff menu
+                    case "1":
+                        DisplayStaffLogin(); // display staff menu
                         break;
 
-                    case 2:
+                    case "2":
                         FunctionalMemberMenu(); // display member menu
                         break;
 
-                    case 0:
+                    case "0":
                         break; // exit 
                 }
-            } while (mainMenuSelection != 0);
+            } while (mainMenuSelection != "0");
         }
 
         static void FunctionalStaffMenu()
@@ -160,56 +189,57 @@ namespace CommunityLibrary
             do
             {
                 DisplayStaffMenu();
-                staffMenuSelection = (int)Console.ReadKey().KeyChar;
+                staffMenuSelection = Console.ReadLine().ToString();
 
                 switch (staffMenuSelection)
                 {
-                    case 1:
-                        // add a new movie DVD
+                    case "1":
+                        AddMovie(); // add a new movie DVD
                         break;
 
-                    case 2:
+                    case "2":
                         // remove a movie DVD
                         break;
 
-                    case 3:
-                        // register a new member
+                    case "3":
+                        RegisterMember(); // register new member
                         break;
 
-                    case 4:
+                    case "4":
                         // find a registered member's phone number
                         break;
 
-                    case 0:
+                    case "0":
                         FunctionalMainMenu(); // return to main menu
                         break;
                 }
-            } while (memberMenuSelection != 0);
+            } while (memberMenuSelection != "0");
         }
 
         static void FunctionalMemberMenu()
         {
             DisplayMemberMenu();
-            memberMenuSelection = (int)Console.ReadKey().KeyChar;
+            memberMenuSelection = Console.ReadKey().ToString();
 
             switch (memberMenuSelection)
             {
-                case 1:
+                case "1":
                     break;
 
-                case 2:
+                case "2":
                     break;
 
-                case 3:
+                case "3":
+                    RegisterMember();
                     break;
 
-                case 4:
+                case "4":
                     break;
 
-                case 5:
+                case "5":
                     break;
 
-                case 0:
+                case "0":
                     FunctionalMainMenu(); // return to main menu
                     break;
             }
@@ -217,7 +247,7 @@ namespace CommunityLibrary
 
         static void Main(string[] args)
         {
-            DisplayStaffLogin();
+            FunctionalMainMenu();
         }
     }
 }
