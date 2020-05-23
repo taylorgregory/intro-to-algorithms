@@ -9,16 +9,12 @@ using System.Runtime.InteropServices;
 using System.Xml.Serialization;
 using LibraryManagement;
 using System.Text.RegularExpressions;
+using System.Collections.Generic;
 
 namespace CommunityLibrary
 {
     class Program
     {
-        // to do:
-        // implement 'change password' feature on login (and remaining login functionality)
-        // add movies to the 'borrowed movies' array for members
-        // check slack to see if we can do this???
-
         public static MovieCollection movieCollection = new MovieCollection();
         public static Member[] members = new Member[10];
         
@@ -262,27 +258,114 @@ namespace CommunityLibrary
             Console.ReadKey();
         }
 
-        static void BorrowMovie(string movieTitle)
+        static void BorrowMovie(Member borrowingMember)
         {
-            Movie searchedMovie = MovieCollection.FindMovieInTree(movieTitle).data;
+            Console.Clear();
+
+            // heading
+            Console.WriteLine("Please input the name of the movie that you would like to borrow.");
+            string desiredMovie = Console.ReadLine();
+
+            bool alreadyBorrowed = false;
+            Movie searchedMovie = MovieCollection.FindMovieInTree(desiredMovie).data;
             
-            // nested if statement to check if they already have it (which gives different error codes)
-            if (searchedMovie.CopiesAvailable > 0) // AND they do not currently have it...
+            if (borrowingMember.Movies != null)
             {
+                for (int i = 0; i < borrowingMember.Movies.Length; i++)
+                {
+                    if (searchedMovie == borrowingMember.Movies[i]) // the logged in member has already borrowed this movie
+                    {
+                        alreadyBorrowed = true;
+                        Console.WriteLine("You have already borrowed " + desiredMovie + ". You must return it before you borrow another. Press any key to return to the member menu.");
+                    }
+                }
+            }
+
+            if (borrowingMember.Movies != null && borrowingMember.Movies.Length > 10)
+            {
+                Console.WriteLine("You have already borrowed the maximum of 10 movies. Please return one before borrowing more.");
+            }
+            else if (searchedMovie.CopiesAvailable > 0 && !alreadyBorrowed) 
+            {
+                if (borrowingMember.Movies != null)
+                {
+                    borrowingMember.Movies.Append(searchedMovie);
+                }
+                else
+                {
+                    List<Movie> movieList = new List<Movie>();
+                    movieList.Add(searchedMovie);
+                    borrowingMember.Movies = movieList.ToArray();
+                }
+
                 searchedMovie.CopiesAvailable -= 1;
                 searchedMovie.BorrowHistory += 1;
-                // add it to their list of movies
-            } else
+                Console.WriteLine("You have successfully borrowed " + desiredMovie + ".");
+            } 
+            else
             {
-                Console.WriteLine("Sorry, there are currently no copies of this movie available.");
+                Console.WriteLine("Sorry, there are currently no copies of " + desiredMovie + " available.");
             }
+
+            Console.WriteLine("Press any key to return to the member menu.");
+            Console.ReadKey();
         }
 
-        static void ReturnMovie(string movieTitle)
+        static void ReturnMovie(Member returningMember)
         {
-            Movie searchedMovie = MovieCollection.FindMovieInTree(movieTitle).data;
+            Console.Clear();
 
-            // if they have the movie...
+            // heading
+            Console.WriteLine("Please input the name of the movie that you would like to return.");
+            string returningMovie = Console.ReadLine();
+
+            Movie searchedMovie = MovieCollection.FindMovieInTree(returningMovie).data;
+            bool ableToReturn = false;
+
+            if (returningMember.Movies != null)
+            {
+                for (int i = 0; i < returningMember.Movies.Length; i++)
+                {
+                    if (returningMember.Movies[i].Title == returningMovie)
+                    {
+                        ableToReturn = true;
+                        var movieList = returningMember.Movies.ToList();
+                        movieList.Remove(searchedMovie);
+                        returningMember.Movies = movieList.ToArray();
+                        Console.WriteLine("You have successfully returned " + returningMovie + ".");
+                    }
+                }
+            }
+
+            if (!ableToReturn)
+            {
+                Console.WriteLine("Movie return unsuccessful. You are not able to return a movie that you have not borrowed.");
+            }
+
+            Console.WriteLine("Press any key to return to the member menu.");
+            Console.ReadKey();
+        }
+
+        static void ListCurrentlyBorrowedMovies(Member givenMember)
+        {
+            Console.Clear();
+
+            if(givenMember.Movies == null || givenMember.Movies[0] == null)
+            {
+                Console.WriteLine("You are not currently borrowing any movies.");
+            }
+            else
+            {
+                Console.WriteLine("The movie titles that you currently are borrowing are: ");
+                for (int i = 0; i < givenMember.Movies.Length; i++)
+                {
+                    Console.WriteLine(givenMember.Movies[i].Title);
+                    Console.WriteLine();
+                }
+            }
+
+            Console.WriteLine("Press any key to return to the member menu.");
+            Console.ReadKey();
         }
 
         static void DisplayMemberLogin()
@@ -340,7 +423,8 @@ namespace CommunityLibrary
                         members[i].Password = password; 
                         Console.WriteLine("Password was successfully set. Press any key to continue to the member menu.");
                         Console.ReadKey();
-                        FunctionalMemberMenu();
+
+                        FunctionalMemberMenu(members[i]);
                         break;
                     }
                 }
@@ -352,7 +436,7 @@ namespace CommunityLibrary
                 {
                     if (members[i] != null && username == members[i].Username && password == members[i].Password)
                     {
-                        FunctionalMemberMenu();
+                        FunctionalMemberMenu(members[i]);
                         break;
                     }
                     else
@@ -428,7 +512,7 @@ namespace CommunityLibrary
                         break;
 
                     case "4":
-                        FindPhoneNumber();// find a registered member's phone number
+                        FindPhoneNumber(); // find a registered member's phone number
                         break;
 
                     case "0":
@@ -438,7 +522,7 @@ namespace CommunityLibrary
             } while (staffMenuSelection != "0");
         }
 
-        static void FunctionalMemberMenu()
+        static void FunctionalMemberMenu(Member loggedInUser)
         {
             string memberMenuSelection;
 
@@ -456,18 +540,16 @@ namespace CommunityLibrary
                         Console.ReadKey();
                         break;
 
-                    case "2":
-                        for (int i = 0; i < 3; i++)
-                        {
-                            Console.WriteLine("hi"+members[i].FullName+"hi");
-                        }
-                        Console.ReadKey();// borrow a movie
+                    case "2": // borrow a movie
+                        BorrowMovie(loggedInUser);
                         break;
 
                     case "3": // return a movie
+                        ReturnMovie(loggedInUser);
                         break;
 
                     case "4": // list currently borrowed movies
+                        ListCurrentlyBorrowedMovies(loggedInUser);
                         break;
 
                     case "5": // show top 10 popular movies

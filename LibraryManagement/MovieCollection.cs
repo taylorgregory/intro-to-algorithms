@@ -77,15 +77,13 @@ namespace LibraryManagement
 
         private static TreeNode FindMovieInTree(string title, TreeNode parent)
         {
-            string movieNodeName = parent.data.Title;
-
             if (parent != null)
             {
-                if (title == movieNodeName)
+                if (title == parent.data.Title)
                 {
                     return parent;
                 }
-                if (string.Compare(movieNodeName, parent.data.Title) == -1)
+                if (string.Compare(title, parent.data.Title) == -1)
                 {
                     return FindMovieInTree(title, parent.left);
                 }

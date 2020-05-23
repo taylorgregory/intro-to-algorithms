@@ -32,7 +32,7 @@ namespace LibraryManagement
                 }
             }
 
-            if (MemIncrement < 10) {// maximum of 10 members in the member array
+            if (MemIncrement < 10) { // maximum of 10 members in the member array
                 memArray[MemIncrement] = member;
                 MemIncrement += 1;
                 return true;
@@ -48,29 +48,23 @@ namespace LibraryManagement
 
         public static void SearchForMemberInArray(string fullName, Member[] memArray)
         {
+            bool found = false;
             for (int i = 0; i < memArray.Length; i++)
             {
-                if (memArray[i] == null)
+                if (memArray[i] != null && memArray[i].FullName == fullName)
                 {
-                    Console.WriteLine();
-                    Console.WriteLine("There are no members in the system with the full name " + fullName + ".");
-                    Console.WriteLine();
-                    break;
-                }
-                else if (memArray[i].FullName == fullName)
-                {
+                    found = true;
                     Console.WriteLine();
                     Console.WriteLine(fullName + "'s phone number is " + memArray[i].PhoneNumber);
-                    Console.WriteLine();
-                    break;
+                    Console.WriteLine();   
                 }
-                else
-                {
-                    Console.WriteLine();
-                    Console.WriteLine("There are no members in the system with the full name " + fullName + ".");
-                    Console.WriteLine();
-                    break;
-                }
+            }
+            if (!found)
+            {
+                // this code only executes if no members in the system have the entered full name
+                Console.WriteLine();
+                Console.WriteLine("There are no members in the system with the full name " + fullName + ".");
+                Console.WriteLine();
             }
         }
     }
