@@ -12,7 +12,8 @@ namespace LibraryManagement
 {
     public class MovieCollection
     {
-        private static TreeNode root; 
+        private static TreeNode root;
+        public static int index = 0;
 
         // getters and setters
         public TreeNode Root
@@ -84,7 +85,7 @@ namespace LibraryManagement
             {
                 parent.left = RemoveMovieFromTree(parent.left, movie);
             }
-            else if (string.Compare(movie.Title, parent.data.Title) == -1) // if parent comes first alphabetically
+            else if (string.Compare(movie.Title, parent.data.Title) == 1) // if parent comes first alphabetically
             {
                 parent.right = RemoveMovieFromTree(parent.right, movie);
             }
@@ -146,11 +147,13 @@ namespace LibraryManagement
 
         public static void DisplayAllMoviesInTree()
         {
+            // in-order tree traversal to display movies alphabetically
             DisplayAllMoviesInTree(root);
         }
 
-        private static void DisplayAllMoviesInTree(TreeNode Root) // return type
+        private static void DisplayAllMoviesInTree(TreeNode Root)
         {
+            // in-order tree traversal to display movies alphabetically
             if (Root == null)
             {
                 return;
@@ -161,12 +164,46 @@ namespace LibraryManagement
             DisplayAllMoviesInTree(Root.right);
         }
 
-        //public bool DisplayTopTenInTree()
-        //{
-            // display the top 10 most frequently borrowed movies
-            // use tree traversal to transform tree into array
-            // sort array based on no. of times borrowed
-        //}
+        public static Movie[] PutAllMoviesInArray(Movie[] movies)
+        {
+            return PutAllMoviesInArray(root, movies);
+        }
+
+        private static Movie[] PutAllMoviesInArray(TreeNode Root, Movie[] movies)
+        {
+            // in order traversal to put all movies into an array. note that the array is pre-defined
+            if (Root == null)
+            {
+                return null;
+            }
+
+            PutAllMoviesInArray(Root.left, movies);
+            movies[index++] = Root.data;
+            PutAllMoviesInArray(Root.right, movies);
+
+            return movies;
+        }
+
+        public static Movie[] SortByPopularity(Movie[] movArray)
+        {
+            // implementing bubble sort to sort the movie array in descending order
+
+            // this is not yet right... have not specified that we want to display popularity??
+
+            for (int i = 0; i < movArray.Length; i++)
+            {
+                for (int j = 0; j < movArray.Length; j++)
+                {
+                    if (movArray[i].BorrowHistory > movArray[j].BorrowHistory)
+                    {
+                        Movie temporarySwap = movArray[i];
+                        movArray[i] = movArray[j];
+                        movArray[j] = temporarySwap;
+                    }
+                }
+            }
+            return movArray;  
+        }
 
 
 

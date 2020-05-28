@@ -17,12 +17,10 @@ namespace CommunityLibrary
     {
         public static MovieCollection movieCollection = new MovieCollection();
         public static Member[] members = new Member[10];
+        public static Movie[] movieArray = new Movie[25]; // assuming a maximum of 25 movies in the system
         
         static void DisplayMainMenu()
         {
-            // reset the console
-            Console.Clear();
-
             // display main menu
             Console.WriteLine("Welcome to the Community Library");
             Console.WriteLine("=========== Main Menu ===========");
@@ -41,7 +39,6 @@ namespace CommunityLibrary
             bool attempted = false;
 
             do {
-                // reset the console
                 Console.Clear();
 
                 // error message if user input was incorrect
@@ -73,9 +70,6 @@ namespace CommunityLibrary
 
         static void DisplayStaffMenu()
         {
-            // reset the console
-            Console.Clear();
-
             // display staff menu
             Console.WriteLine("=========== Staff Menu ===========");
             Console.WriteLine("1. Add a new movie DVD");
@@ -93,8 +87,7 @@ namespace CommunityLibrary
             Console.Clear();
 
             // Entering movie details
-            // need to check validity of each input individually
-            
+
             // heading
             Console.WriteLine("1. Add a new movie");
             Console.WriteLine("");
@@ -105,8 +98,8 @@ namespace CommunityLibrary
             ttl = ttl.Trim(); // remove spaces at the start and end of string
 
             // insert starring actors
-            // need to account for no input
-            // need to account for double comma
+            // -- need to account for no input
+            // -- need to account for double comma
             Console.Write("Starring actors (separated by commas): ");
             string star = Console.ReadLine().ToString(); 
             string[] starArray = star.Split(','); // split according to the commas
@@ -121,8 +114,14 @@ namespace CommunityLibrary
             dir = dir.Trim(); // remove spaces at the start and end of string
 
             // insert duration
-            Console.Write("Duration: ");
-            int dur = int.Parse(Console.ReadLine());
+            Console.Write("Duration (min): ");
+            string durInput = Console.ReadLine();
+            int dur;
+            while (!int.TryParse(durInput, out dur))
+            {
+                Console.Write("Error: Duration must be an integer. Please input the movie's duration in minutes: ");
+                durInput = Console.ReadLine();
+            }
 
             // insert genre
             Console.WriteLine("Choose the movie's genre from the selection below (0-8):");
@@ -185,7 +184,13 @@ namespace CommunityLibrary
 
             // insert available copies
             Console.Write("Available copies: ");
-            int availCopies = Convert.ToInt32(Console.ReadLine());
+            string copyInput = Console.ReadLine();
+            int availCopies;
+            while (!int.TryParse(copyInput, out availCopies))
+            {
+                Console.Write("Error: Number of available copies must be an integer. Please try again: ");
+                copyInput = Console.ReadLine();
+            }
 
             // use all user input to create a Movie instance
             Movie addedMovie = new Movie(ttl, starArray, dir, dur, gen, classif, relDate, availCopies); // add available copies
@@ -195,28 +200,46 @@ namespace CommunityLibrary
             // if the movie was successfully added to the BST
             if (status)
             {
-                Console.WriteLine("");
+                Console.WriteLine();
                 Console.WriteLine("Movie successfully added. Press any key to return to the staff menu.");
                 Console.ReadKey();
+            } 
+            else
+            {
+                Console.WriteLine();
+                Console.WriteLine("Movie not added. Press any key to return to the staff menu.");
+                Console.ReadKey();                 
             }
         }
 
         static void RemoveMovie()
         {
+            Console.Clear();
             Console.WriteLine("Input the name of the movie you would like removed:");
             string input = Console.ReadLine();
-            Movie removedMovie = MovieCollection.FindMovieInTree(input).data;
 
-            if (removedMovie.TotalCopies != removedMovie.CopiesAvailable)
+            if (MovieCollection.FindMovieInTree(input) != null)
             {
-                Console.WriteLine("All movie copies must be returned before removing a movie from the system. Please try again later.");
-            } 
+                Movie removedMovie = MovieCollection.FindMovieInTree(input).data;
+
+                if (removedMovie.TotalCopies != removedMovie.CopiesAvailable)
+                {
+                    Console.WriteLine("All movie copies must be returned before removing a movie from the system. Please try again later.");
+                }
+                else
+                {
+                    MovieCollection.RemoveMovieFromTree(removedMovie);
+                    Console.WriteLine(removedMovie.Title + " was successfully removed. Press any key to return to the staff menu.");
+                    Console.ReadKey();
+                }
+            }
             else
             {
-                MovieCollection.RemoveMovieFromTree(removedMovie);
-                Console.WriteLine(removedMovie.Title + " was successfully removed. Press any key to return to the staff menu.");
+                Console.WriteLine("Sorry, there are no records of " + input + " in our movie system.");
                 Console.ReadKey();
             }
+
+
         }
 
         static void RegisterMember()
@@ -280,44 +303,59 @@ namespace CommunityLibrary
             string desiredMovie = Console.ReadLine();
 
             bool alreadyBorrowed = false;
-            Movie searchedMovie = MovieCollection.FindMovieInTree(desiredMovie).data;
-            
-            if (borrowingMember.Movies != null)
-            {
-                for (int i = 0; i < borrowingMember.Movies.Length; i++)
-                {
-                    if (searchedMovie == borrowingMember.Movies[i]) // the logged in member has already borrowed this movie
-                    {
-                        alreadyBorrowed = true;
-                        Console.WriteLine("You have already borrowed " + desiredMovie + ". You must return it before you borrow another. Press any key to return to the member menu.");
-                    }
-                }
-            }
+            bool errorGenerated = false;
 
-            if (borrowingMember.Movies != null && borrowingMember.Movies.Length > 10)
+            if (MovieCollection.FindMovieInTree(desiredMovie) != null)
             {
-                Console.WriteLine("You have already borrowed the maximum of 10 movies. Please return one before borrowing more.");
-            }
-            else if (searchedMovie.CopiesAvailable > 0 && !alreadyBorrowed) 
-            {
+                Movie searchedMovie = MovieCollection.FindMovieInTree(desiredMovie).data;
+
                 if (borrowingMember.Movies != null)
                 {
-                    borrowingMember.Movies.Append(searchedMovie);
-                }
-                else
-                {
-                    List<Movie> movieList = new List<Movie>();
-                    movieList.Add(searchedMovie);
-                    borrowingMember.Movies = movieList.ToArray();
+                    for (int i = 0; i < borrowingMember.Movies.Length; i++)
+                    {
+                        if (searchedMovie == borrowingMember.Movies[i]) // the logged in member has already borrowed this movie
+                        {
+                            alreadyBorrowed = true;
+                            Console.WriteLine("You have already borrowed " + desiredMovie + ". You must return it before you borrow another.");
+                            errorGenerated = true;
+                        }
+                    }
                 }
 
-                searchedMovie.CopiesAvailable -= 1;
-                searchedMovie.BorrowHistory += 1;
-                Console.WriteLine("You have successfully borrowed " + desiredMovie + ".");
-            } 
+                if (borrowingMember.Movies != null && borrowingMember.Movies.Length > 9 && !errorGenerated)
+                {
+                    Console.WriteLine("You have already borrowed the maximum of 10 movies. Please return one before borrowing more.");
+                    errorGenerated = true;
+                }
+                
+                if (searchedMovie.CopiesAvailable > 0 && !alreadyBorrowed && !errorGenerated)
+                {
+                    if (borrowingMember.Movies != null)
+                    {
+                        List<Movie> movieList = borrowingMember.Movies.ToList();
+                        movieList.Add(searchedMovie);
+                        borrowingMember.Movies = movieList.ToArray();
+                    }
+                    else
+                    {
+                        List<Movie> movieList = new List<Movie>();
+                        movieList.Add(searchedMovie);
+                        borrowingMember.Movies = movieList.ToArray();
+                    }
+
+                    searchedMovie.CopiesAvailable -= 1;
+                    searchedMovie.BorrowHistory += 1;
+                    Console.WriteLine("You have successfully borrowed " + desiredMovie + ".");
+                    errorGenerated = true;
+                }
+                else if (!errorGenerated)
+                {
+                    Console.WriteLine("Sorry, there are currently no copies of " + desiredMovie + " available.");
+                }
+            }
             else
             {
-                Console.WriteLine("Sorry, there are currently no copies of " + desiredMovie + " available.");
+                Console.WriteLine("Sorry, there are no records of " + desiredMovie + " on our records.");
             }
 
             Console.WriteLine("Press any key to return to the member menu.");
@@ -332,27 +370,34 @@ namespace CommunityLibrary
             Console.WriteLine("Please input the name of the movie that you would like to return.");
             string returningMovie = Console.ReadLine();
 
-            Movie searchedMovie = MovieCollection.FindMovieInTree(returningMovie).data;
-            bool ableToReturn = false;
-
-            if (returningMember.Movies != null)
+            if (MovieCollection.FindMovieInTree(returningMovie) != null)
             {
-                for (int i = 0; i < returningMember.Movies.Length; i++)
+                Movie searchedMovie = MovieCollection.FindMovieInTree(returningMovie).data;
+                bool ableToReturn = false;
+
+                if (returningMember.Movies != null)
                 {
-                    if (returningMember.Movies[i].Title == returningMovie)
+                    for (int i = 0; i < returningMember.Movies.Length; i++)
                     {
-                        ableToReturn = true;
-                        var movieList = returningMember.Movies.ToList();
-                        movieList.Remove(searchedMovie);
-                        returningMember.Movies = movieList.ToArray();
-                        Console.WriteLine("You have successfully returned " + returningMovie + ".");
+                        if (returningMember.Movies[i].Title == returningMovie)
+                        {
+                            ableToReturn = true;
+                            var movieList = returningMember.Movies.ToList();
+                            movieList.Remove(searchedMovie);
+                            returningMember.Movies = movieList.ToArray();
+                            Console.WriteLine("You have successfully returned " + returningMovie + ".");
+                        }
                     }
                 }
-            }
 
-            if (!ableToReturn)
+                if (!ableToReturn)
+                {
+                    Console.WriteLine("Movie return unsuccessful. You are not able to return a movie that you have not borrowed.");
+                }
+            }
+            else
             {
-                Console.WriteLine("Movie return unsuccessful. You are not able to return a movie that you have not borrowed.");
+                Console.WriteLine("Sorry, there are no records of " + returningMovie + " on our records.");
             }
 
             Console.WriteLine("Press any key to return to the member menu.");
@@ -363,7 +408,7 @@ namespace CommunityLibrary
         {
             Console.Clear();
 
-            if(givenMember.Movies == null || givenMember.Movies[0] == null)
+            if(givenMember.Movies == null || givenMember.Movies.Length == 0 || givenMember.Movies[0] == null)
             {
                 Console.WriteLine("You are not currently borrowing any movies.");
             }
@@ -373,10 +418,10 @@ namespace CommunityLibrary
                 for (int i = 0; i < givenMember.Movies.Length; i++)
                 {
                     Console.WriteLine(givenMember.Movies[i].Title);
-                    Console.WriteLine();
                 }
             }
 
+            Console.WriteLine();
             Console.WriteLine("Press any key to return to the member menu.");
             Console.ReadKey();
         }
@@ -392,9 +437,6 @@ namespace CommunityLibrary
 
             do
             {
-                // Reset the console
-                Console.Clear();
-
                 if (attemptedLogin)
                 {
                     Console.WriteLine("Incorrect username or password. Insert 0 to return to the main menu or ENTER to try again.");
@@ -406,6 +448,7 @@ namespace CommunityLibrary
                     }
                 }
 
+                Console.Clear();
                 // input username
                 Console.Write("Please enter your member username: ");
                 username = Console.ReadLine().ToString();
@@ -462,9 +505,6 @@ namespace CommunityLibrary
 
         static void DisplayMemberMenu()
         {
-            // Reset the console
-            Console.Clear();
-
             // Display member menu 
             Console.WriteLine("=========== Member Menu ===========");
             Console.WriteLine("1. Display all movies");
@@ -474,14 +514,23 @@ namespace CommunityLibrary
             Console.WriteLine("5. Display top 10 most popular movies");
             Console.WriteLine("0. Return to main menu");
             Console.WriteLine("===================================");
-            Console.WriteLine("Please make a selection (1-5 or 0 to return to main menu");
+            Console.WriteLine("Please make a selection (1-5 or 0 to return to main menu)");
         }
 
         static void FunctionalMainMenu()
         {
+            bool invalid = false;
             string mainMenuSelection;
             do
             {
+                Console.Clear();
+
+                if (invalid)
+                {
+                    Console.WriteLine("Invalid input. Please try again.");
+                    Console.WriteLine();
+                }
+
                 DisplayMainMenu();
                 mainMenuSelection = Console.ReadLine().ToString();
 
@@ -496,7 +545,11 @@ namespace CommunityLibrary
                         break;
 
                     case "0":
-                        break; // exit 
+                        break; // exit
+
+                    default:
+                        invalid = true; // this will prompt an error message on the next do while loop
+                        break;
                 }
             } while (mainMenuSelection != "0");
         }
@@ -504,9 +557,18 @@ namespace CommunityLibrary
         static void FunctionalStaffMenu()
         {
             string staffMenuSelection;
+            bool invalid = false;
 
             do
             {
+                Console.Clear();
+
+                if (invalid)
+                {
+                    Console.WriteLine("Invalid input. Please try again.");
+                    Console.WriteLine();
+                }
+
                 DisplayStaffMenu();
                 staffMenuSelection = Console.ReadLine().ToString();
 
@@ -531,6 +593,10 @@ namespace CommunityLibrary
                     case "0":
                         FunctionalMainMenu(); // return to main menu
                         break;
+
+                    default:
+                        invalid = true;
+                        break;
                 }
             } while (staffMenuSelection != "0");
         }
@@ -538,9 +604,18 @@ namespace CommunityLibrary
         static void FunctionalMemberMenu(Member loggedInUser)
         {
             string memberMenuSelection;
+            bool invalid = false;
 
             do
             {
+                Console.Clear();
+
+                if (invalid)
+                {
+                    Console.WriteLine("Invalid input. Please try again.");
+                    Console.WriteLine();
+                }
+
                 DisplayMemberMenu();
                 memberMenuSelection = Console.ReadLine().ToString();
 
@@ -566,10 +641,48 @@ namespace CommunityLibrary
                         break;
 
                     case "5": // show top 10 popular movies
+                        
+                        Movie[] movsWithNull = MovieCollection.PutAllMoviesInArray(movieArray); // in-order tree traversal
+                        int index = 0;
+
+                        for (int i = 0; i < movsWithNull.Length; i++) // this loop counts how many non-null elements are in the array
+                        {
+                            if (movsWithNull[i] != null)
+                            {
+                                index += 1; 
+                            }
+                        }
+
+                        Movie[] movs = new Movie[index]; // creating an array with no null elements
+
+                        for (int i = 0; i < index; i++)
+                        {
+                            movs[i] = movsWithNull[i];
+                        }
+
+                        Movie[] sortedMovs = MovieCollection.SortByPopularity(movs);
+
+                        Console.Clear();
+                        Console.WriteLine("The top 10 most popular movies are:");
+
+                        for (int i = 0; i < 10; i++)
+                        {
+                            Console.WriteLine(sortedMovs[i].Title);
+                            Console.WriteLine(sortedMovs[i].BorrowHistory);
+                            Console.WriteLine();
+                        }
+
+                        Console.WriteLine("Press any key to return to the member menu.");
+                        Console.ReadKey();
+
                         break;
 
                     case "0":
                         FunctionalMainMenu(); // return to main menu
+                        break;
+
+                    default:
+                        invalid = true;
                         break;
                 }
             } while (memberMenuSelection != "0");
@@ -577,6 +690,8 @@ namespace CommunityLibrary
 
         static void CreateDummyUsers()
         {
+            // creating dummy users to help with testing and showing implementations
+
             Member member1 = new Member("Bec", "McMahon", "34 Fairfield Avenue, Norman Gardens", "0447635285");
             member1.Password = "1234";
             MemberCollection.AddMemberToArray(member1, members);
@@ -592,6 +707,8 @@ namespace CommunityLibrary
 
         static void CreateDummyMovies()
         {
+            // creating dummy movies to help with testing and showing implementations
+
             Movie movie1 = new Movie("Forrest Gump", new string[]{ "Tom Hanks", "Robin Wright", "Gary Sinise" }, "Robert Zemeckis", 142, Movie.Genre.Family, Movie.Classification.ParentalGuidance, "17-11-1994", 3);
             movie1.BorrowHistory = 4;
             MovieCollection.AddMovieToTree(movieCollection, movie1);
@@ -616,7 +733,7 @@ namespace CommunityLibrary
             movie6.BorrowHistory = 0;
             MovieCollection.AddMovieToTree(movieCollection, movie6);
 
-            Movie movie7 = new Movie("Titanic", new string[] { "Leonardo DiCaprio", "Kate Winslet" }, "James Cameron", 195, Movie.Genre.Drama, Movie.Classification.Mature, "17-12-1997", 3);
+            Movie movie7 = new Movie("Titanic", new string[] { "Leonardo DiCaprio", "Kate Winslet" }, "James Cameron", 195, Movie.Genre.Drama, Movie.Classification.Mature, "17-12-1997", 1);
             movie7.BorrowHistory = 2;
             MovieCollection.AddMovieToTree(movieCollection, movie7);
 
@@ -658,7 +775,7 @@ namespace CommunityLibrary
             CreateDummyUsers();
             CreateDummyMovies();
 
-            FunctionalMainMenu();
+            FunctionalMainMenu(); // program entry point
         }
     }
 }
